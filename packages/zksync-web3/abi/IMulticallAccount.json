@@ -1,0 +1,34 @@
+{
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "to",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "value",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "bytes",
+                            "name": "data",
+                            "type": "bytes"
+                        }
+                    ],
+                    "internalType": "struct IMulticall.Call[]",
+                    "name": "_calls",
+                    "type": "tuple[]"
+                }
+            ],
+            "name": "multicall",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        }
+    ]
+}
