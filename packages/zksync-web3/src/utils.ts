@@ -7,15 +7,11 @@ import {
     PriorityOpTree,
     DeploymentInfo,
     PaymasterParams,
-    EthereumSignature,
-    MulticallCall,
-    MulticallTransaction,
+    EthereumSignature
 } from './types';
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer';
 import { Provider } from './provider';
 import { EIP712Signer } from './signer';
-import { IMulticallAccountInterface } from '../typechain/IMulticallAccount';
-import { IMulticall3ContractInterface } from '../typechain/IMulticall3Contract';
 
 export * from './paymaster-utils';
 
@@ -25,16 +21,9 @@ export const ZKSYNC_MAIN_ABI = new utils.Interface(require('../../abi/IZkSync.js
 export const CONTRACT_DEPLOYER = new utils.Interface(require('../../abi/ContractDeployer.json').abi);
 export const L1_MESSENGER = new utils.Interface(require('../../abi/IL1Messenger.json').abi);
 export const IERC20 = new utils.Interface(require('../../abi/IERC20.json').abi);
-export const IERC165 = new utils.Interface(require('../../abi/IERC165.json').abi);
 export const IERC1271 = new utils.Interface(require('../../abi/IERC1271.json').abi);
 export const L1_BRIDGE_ABI = new utils.Interface(require('../../abi/IL1Bridge.json').abi);
 export const L2_BRIDGE_ABI = new utils.Interface(require('../../abi/IL2Bridge.json').abi);
-export const IMULTICALL_ACCOUNT_ABI = new utils.Interface(
-    require('../../abi/IMulticallAccount.json').abi
-) as IMulticallAccountInterface;
-export const IMULTICALL3_CONTRACT_ABI = new utils.Interface(
-    require('../../abi/IMulticall3Contract.json').abi
-) as IMulticall3ContractInterface;
 
 export const BOOTLOADER_FORMAL_ADDRESS = '0x0000000000000000000000000000000000008001';
 export const CONTRACT_DEPLOYER_ADDRESS = '0x0000000000000000000000000000000000008006';
@@ -65,9 +54,6 @@ export const DEPOSIT_GAS_PER_PUBDATA_LIMIT = 800;
 // deposit will succeed if the token contract is yet to be deployed (which may very well be the case).
 export const RECOMMENDED_DEPOSIT_L2_GAS_LIMIT = 10_000_000;
 
-export const MULTICALL_ACCOUNT_INTERFACE_ID = getInterfaceID(IMULTICALL_ACCOUNT_ABI)._hex;
-export const MULTICALL3_CONTRACT_ADDRESS = '0x349bA462B2A0799693Ba1acf0D60a52530BF78ad';
-
 export function isETH(token: Address) {
     return token.toLowerCase() == ETH_ADDRESS || token.toLowerCase() == L2_ETH_TOKEN_ADDRESS;
 }
@@ -79,7 +65,7 @@ export function sleep(millis: number) {
 export function layer1TxDefaults() {
     return {
         queueType: PriorityQueueType.Deque,
-        opTree: PriorityOpTree.Full,
+        opTree: PriorityOpTree.Full
     };
 }
 
@@ -90,7 +76,7 @@ export function getHashedL2ToL1Msg(sender: Address, msg: BytesLike, txNumberInBl
         ...ethers.utils.zeroPad(ethers.utils.hexlify(txNumberInBlock), 2),
         ...ethers.utils.arrayify(L1_MESSENGER_ADDRESS),
         ...ethers.utils.zeroPad(sender, 32),
-        ...ethers.utils.arrayify(ethers.utils.keccak256(msg)),
+        ...ethers.utils.arrayify(ethers.utils.keccak256(msg))
     ]);
 
     return ethers.utils.keccak256(encodedMsg);
@@ -112,7 +98,7 @@ export function getDeployedContracts(receipt: ethers.providers.TransactionReceip
             return {
                 sender: utils.getAddress(sender),
                 bytecodeHash: bytesCodehash,
-                deployedAddress: utils.getAddress(address),
+                deployedAddress: utils.getAddress(address)
             };
         });
 
@@ -135,7 +121,7 @@ export function createAddress(sender: Address, senderNonce: BigNumberish) {
             ethers.utils.concat([
                 prefix,
                 ethers.utils.zeroPad(sender, 32),
-                ethers.utils.zeroPad(ethers.utils.hexlify(senderNonce), 32),
+                ethers.utils.zeroPad(ethers.utils.hexlify(senderNonce), 32)
             ])
         )
         .slice(26);
@@ -188,7 +174,7 @@ export function serialize(transaction: ethers.providers.TransactionRequest, sign
         formatNumber(transaction.gasLimit || 0, 'gasLimit'),
         transaction.to != null ? utils.getAddress(transaction.to) : '0x',
         formatNumber(transaction.value || 0, 'value'),
-        transaction.data || '0x',
+        transaction.data || '0x'
     ];
 
     if (signature) {
@@ -282,7 +268,7 @@ export function parseTransaction(payload: ethers.BytesLike): ethers.Transaction 
 
         return {
             paymaster: utils.getAddress(arr[0]),
-            paymasterInput: utils.arrayify(arr[1]),
+            paymasterInput: utils.arrayify(arr[1])
         };
     }
 
@@ -307,14 +293,14 @@ export function parseTransaction(payload: ethers.BytesLike): ethers.Transaction 
             gasPerPubdata: handleNumber(raw[12]),
             factoryDeps: raw[13],
             customSignature: raw[14],
-            paymasterParams: arrayToPaymasterParams(raw[15]),
-        },
+            paymasterParams: arrayToPaymasterParams(raw[15])
+        }
     };
 
     const ethSignature = {
         v: handleNumber(raw[7]).toNumber(),
         r: raw[8],
-        s: raw[9],
+        s: raw[9]
     };
 
     if (
@@ -432,7 +418,10 @@ async function isSignatureCorrect(
     msgHash: string,
     signature: SignatureLike
 ): Promise<boolean> {
-    const isContractAccount = await isContractAddress(provider, address);
+    let isContractAccount = false;
+
+    const code = await provider.getCode(address);
+    isContractAccount = ethers.utils.arrayify(code).length != 0;
 
     if (!isContractAccount) {
         return isECDSASignatureCorrect(address, msgHash, signature);
@@ -467,74 +456,4 @@ export async function isTypedDataSignatureCorrect(
 ): Promise<boolean> {
     const msgHash = ethers.utils._TypedDataEncoder.hash(domain, types, value);
     return await isSignatureCorrect(provider, address, msgHash, signature);
-}
-
-export async function isContractAddress(provider: Provider, address: string): Promise<boolean> {
-    const code = await provider.getCode(address);
-    const result = ethers.utils.arrayify(code).length !== 0;
-
-    return result;
-}
-
-export async function isSupportInterfaces(provider: Provider, address: string, interfaceId: string): Promise<boolean> {
-    const contract = new ethers.Contract(address, IERC165, provider);
-    const result = await contract.callStatic.supportsInterface(interfaceId);
-
-    return result;
-}
-
-export function getInterfaceID(contractInterface: ethers.utils.Interface) {
-    let interfaceID: ethers.BigNumber = ethers.constants.Zero;
-    const functions: string[] = Object.keys(contractInterface.functions);
-    for (let i = 0; i < functions.length; i++) {
-        interfaceID = interfaceID.xor(contractInterface.getSighash(functions[i]));
-    }
-
-    return interfaceID;
-}
-
-export async function prepareMulticallTransactions(
-    provider: Provider,
-    to: string,
-    calls: MulticallCall[]
-): Promise<MulticallTransaction[]> {
-    if (calls.length === 0) throw new Error('No calls provided');
-
-    const isContract = await isContractAddress(provider, to);
-    const isMultiCallSupported =
-        isContract && (await isSupportInterfaces(provider, to, MULTICALL_ACCOUNT_INTERFACE_ID));
-
-    const transactions = isMultiCallSupported
-        ? [prepareMulticallTransaction(calls, to)]
-        : calls.map((call) => prepareNormalTransaction(call))
-
-    return transactions;
-}
-
-function prepareMulticallTransaction(_calls: MulticallCall[], to: string): MulticallTransaction {
-    const calls = _calls.map((call) => ({
-        to: call.to,
-        value: call.value ?? ethers.constants.Zero,
-        data: call.data ?? [],
-    }));
-    const value = getTotalValuesFromCalls(calls);
-    const data = IMULTICALL_ACCOUNT_ABI.encodeFunctionData('multicall', [calls]);
-
-    return {
-        to,
-        value,
-        data,
-    };
-}
-
-function prepareNormalTransaction(call: MulticallCall): MulticallTransaction {
-    return {
-        to: call.to,
-        value: call.value ?? ethers.constants.Zero,
-        data: call.data ?? [],
-    }
-}
-
-function getTotalValuesFromCalls(calls: { value: ethers.BigNumberish }[]) {
-    return calls.reduce((acc, call) => acc.add(call.value), ethers.BigNumber.from(0));
 }

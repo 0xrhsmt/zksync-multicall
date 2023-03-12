@@ -1,8 +1,8 @@
 import { EIP712Signer } from './signer';
 import { Provider } from './provider';
-import { serialize, EIP712_TX_TYPE, prepareMulticallTransactions } from './utils';
+import { serialize, EIP712_TX_TYPE } from './utils';
 import { ethers, utils } from 'ethers';
-import { BlockTag, TransactionResponse, TransactionRequest, MulticallCall, MulticallResult } from './types';
+import { BlockTag, TransactionResponse, TransactionRequest } from './types';
 import { ProgressCallback } from '@ethersproject/json-wallets';
 import { AdapterL1, AdapterL2 } from './adapters';
 
@@ -124,48 +124,5 @@ export class Wallet extends AdapterL2(AdapterL1(ethers.Wallet)) {
         // Typescript isn't smart enough to recognise that wallet.sendTransaction
         // calls provider.sendTransaction which returns our extended type and not ethers' one.
         return (await super.sendTransaction(transaction)) as TransactionResponse;
-    }
-
-    async multicall(
-        calls: MulticallCall[],
-        overrides: Pick<TransactionRequest, keyof ethers.PayableOverrides> = {}
-    ): Promise<MulticallResult> {
-        let result: TransactionResponse[]
-
-        try {
-            result = await this._multicall(calls, overrides);
-        } catch (error) {
-            return {
-                ok: false,
-                error
-            }
-        }
-
-        return {
-            ok: true,
-            value: result,
-        }
-    }
-
-    private async _multicall(
-        calls: MulticallCall[],
-        overrides: Pick<TransactionRequest, keyof ethers.PayableOverrides> = {}
-    ): Promise<TransactionResponse[]> {
-        const address = await this.getAddress();
-        const transactions = await prepareMulticallTransactions(this.provider, address, calls);
-
-        const responses = [];
-        for await (const transaction of transactions) {
-            const res = await this.sendTransaction({
-                from: address,
-                ...transaction,
-                ...overrides,
-            });
-            await res.wait();
-
-            responses.push(res)
-        }
-
-        return responses;
     }
 }

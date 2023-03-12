@@ -8,8 +8,7 @@
     "strictNullChecks": false,
     "skipLibCheck": true,
     "outDir": "build",
-    "declaration": true,
-    "noImplicitAny": false,
+    "declaration": true
   },
   "include": ["src/**/*.ts"]
 }
