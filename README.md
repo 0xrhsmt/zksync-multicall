@@ -6,7 +6,7 @@ https://app.buidlbox.io/zksync/era-hack-series
 
 ## How it works
 
-If the Account Contract supports multicall function（[details](https://docs.argent.xyz/#multicall)）, you can call it. 🤗  
+If the Account Contract supports multicall function（[details](https://docs.argent.xyz/#multicall)）, you can call it　in a single transaction. 🤗  
 If not supported, send individual transactions. 😱　  
 
 **You can call multicall as follows.**
