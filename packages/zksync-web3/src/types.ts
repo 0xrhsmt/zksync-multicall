@@ -1,6 +1,17 @@
 import { BytesLike, BigNumberish, providers, BigNumber } from 'ethers';
 import { BlockWithTransactions as EthersBlockWithTransactions } from '@ethersproject/abstract-provider';
 
+export type Result<T = void, E = void> =
+  | { ok: true; value: T }
+  | { ok: false; error: E }
+
+export const Ok = <T, E>(value: T): Result<T, E> => ({
+  ok: true,
+  value,
+})
+
+export const Err = <T, E>(error: E): Result<T, E> => ({ ok: false, error })
+
 // 0x-prefixed, hex encoded, ethereum account address
 export type Address = string;
 // 0x-prefixed, hex encoded, ECDSA signature.
@@ -200,3 +211,13 @@ export interface TransactionDetails {
     ethProveTxHash?: string;
     ethExecuteTxHash?: string;
 }
+
+export type MulticallCall = {
+    to: string;
+    value?: BigNumberish;
+    data?: BytesLike;
+};
+
+export type MulticallTransaction = Pick<TransactionRequest, 'to' | 'data' | 'value'>
+
+export type MulticallResult = Result<TransactionResponse[], unknown>;
