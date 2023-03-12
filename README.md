@@ -58,7 +58,7 @@ TBD
 
 | Package                                | Description                            |
 | -------------------------------------- | -------------------------------------- |
-| [`zksync-web3`](/packages/zksync-web3) | zksync-web3 with multical-features |
+| [`zksync-web3`](/packages/zksync-web3) | zksync-web3 with multicall-features |
 | [`sample-app`](/packages/sample-app)   | sample app using zksync-web3           |
 
 ## Development
