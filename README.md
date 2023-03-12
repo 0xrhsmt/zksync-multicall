@@ -1,7 +1,7 @@
 # Argent Multicall
 
 This repository adds multicall functionality to [zksync-web3 library](https://www.npmjs.com/package/zksync-web3).  
-I created this to participate in the following zkSync Era∎ Hack0.  
+I made this to take part in the following zkSync Era∎ Hack0.  
 https://app.buidlbox.io/zksync/era-hack-series
 
 ## How it works
