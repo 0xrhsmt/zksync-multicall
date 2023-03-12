@@ -1,7 +1,13 @@
 import { ethers } from 'ethers';
 import { Provider } from './provider';
-import { serialize, EIP712_TX_TYPE, hashBytecode, DEFAULT_GAS_PER_PUBDATA_LIMIT } from './utils';
-import { BlockTag, TransactionResponse, Signature, TransactionRequest } from './types';
+import {
+    serialize,
+    EIP712_TX_TYPE,
+    hashBytecode,
+    DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    prepareMulticallTransactions,
+} from './utils';
+import { BlockTag, TransactionResponse, Signature, TransactionRequest, MulticallCall, MulticallResult } from './types';
 import { TypedDataDomain, TypedDataSigner } from '@ethersproject/abstract-signer';
 import { _TypedDataEncoder as TypedDataEncoder } from '@ethersproject/hash';
 import { AdapterL1, AdapterL2 } from './adapters';
@@ -20,8 +26,8 @@ export const eip712Types = {
         { name: 'value', type: 'uint256' },
         { name: 'data', type: 'bytes' },
         { name: 'factoryDeps', type: 'bytes32[]' },
-        { name: 'paymasterInput', type: 'bytes' }
-    ]
+        { name: 'paymasterInput', type: 'bytes' },
+    ],
 };
 
 export class EIP712Signer {
@@ -30,7 +36,7 @@ export class EIP712Signer {
         this.eip712Domain = Promise.resolve(chainId).then((chainId) => ({
             name: 'zkSync',
             version: '2',
-            chainId
+            chainId,
         }));
     }
 
@@ -51,7 +57,7 @@ export class EIP712Signer {
             value: transaction.value,
             data: transaction.data,
             factoryDeps: transaction.customData?.factoryDeps?.map((dep) => hashBytecode(dep)) || [],
-            paymasterInput: transaction.customData?.paymasterParams?.paymasterInput || '0x'
+            paymasterInput: transaction.customData?.paymasterParams?.paymasterInput || '0x',
         };
         return signInput;
     }
@@ -71,7 +77,7 @@ export class EIP712Signer {
         const domain = {
             name: 'zkSync',
             version: '2',
-            chainId: transaction.chainId
+            chainId: transaction.chainId,
         };
         return TypedDataEncoder.hash(domain, eip712Types, EIP712Signer.getSignInput(transaction));
     }
@@ -133,6 +139,49 @@ export class Signer extends AdapterL2(ethers.providers.JsonRpcSigner) {
             const txBytes = serialize(transaction);
             return await this.provider.sendTransaction(txBytes);
         }
+    }
+
+    async multicall(
+        calls: MulticallCall[],
+        overrides: Pick<TransactionRequest, keyof ethers.PayableOverrides> = {}
+    ): Promise<MulticallResult> {
+        let result: TransactionResponse[]
+
+        try {
+            result = await this._multicall(calls, overrides);
+        } catch (error) {
+            return {
+                ok: false,
+                error
+            }
+        }
+
+        return {
+            ok: true,
+            value: result,
+        }
+    }
+
+    private async _multicall(
+        calls: MulticallCall[],
+        overrides: Pick<TransactionRequest, keyof ethers.PayableOverrides> = {}
+    ): Promise<TransactionResponse[]> {
+        const address = await this.getAddress();
+        const transactions = await prepareMulticallTransactions(this.provider, address, calls);
+
+        const responses: TransactionResponse[] = [];
+        for await (const transaction of transactions) {
+            const res = await this.sendTransaction({
+                from: address,
+                ...transaction,
+                ...overrides,
+            });
+            await res.wait();
+
+            responses.push(res)
+        }
+
+        return responses
     }
 }
 

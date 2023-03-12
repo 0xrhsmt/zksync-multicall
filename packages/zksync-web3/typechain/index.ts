@@ -10,4 +10,7 @@ export { IAllowListFactory } from './IAllowListFactory';
 export type { IAllowList } from './IAllowList';
 export { IEthTokenFactory } from './IEthTokenFactory';
 export type { IEthToken } from './IEthToken';
-
+export { IERC165Factory } from './IERC165Factory';
+export type { IERC165 } from './IERC165';
+export { IMulticallAccountFactory } from './IMulticallAccountFactory';
+export type { IMulticallAccount } from './IMulticallAccount';
