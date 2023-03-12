@@ -4,10 +4,12 @@
   "license": "MIT",
   "scripts": {},
   "private": true,
-  "dependencies": {},
   "devDependencies": {
     "nx": "15.8.5",
     "prettier": "^2.6.2"
+  },
+  "optionalDependencies": {
+    "@nrwl/nx-linux-x64-musl": "^15.8.6"
   },
   "workspaces": [
     "packages/*"
