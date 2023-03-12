@@ -44,25 +44,21 @@ if (result.ok) {
 }
 ```
 
+## Demo Video
+
+Approve multiple ERC20 tokens using the the multicall function.  
+
+By Argemt Login that supports Multicall  
+
+https://user-images.githubusercontent.com/54972320/224561366-9c83f3f5-2cb7-4aa3-b1e3-ae7646584caa.mov  
+
+By metamask that does not support Multicall  
+
+https://user-images.githubusercontent.com/54972320/224561621-3f497e5b-a2d6-4c40-b427-2d987b4ef393.mov  
 
 ## Live Demo
 
 https://zksync-multicall-sample-app.vercel.app/
-
-## Demo Video
-
-By Argemt Login that supports Multicall
-
-
-https://user-images.githubusercontent.com/54972320/224561366-9c83f3f5-2cb7-4aa3-b1e3-ae7646584caa.mov
-
-
-By metamask that does not support Multicall
-
-
-https://user-images.githubusercontent.com/54972320/224561621-3f497e5b-a2d6-4c40-b427-2d987b4ef393.mov
-
-
 
 ## Packages
 
